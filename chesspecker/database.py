@@ -9,6 +9,8 @@ from PyQt5.QtSql import (
 
 RATE = 1
 MAX_DUR_PER_MOVE = 20
+DAYS_AGO = 0.9
+N_SUCCESS = 10
 
 
 def open_database(path_to_sqlite):
@@ -29,7 +31,10 @@ def create_database(path_to_sqlite):
         CREATE TABLE `tactics`(
           `id` INTEGER PRIMARY KEY AUTOINCREMENT,
           `catalogue` TEXT,
-          `difficulty` FLOAT DEFAULT 0
+          `difficulty` FLOAT DEFAULT 0,
+          `days_ago` FLOAT DEFAULT NULL,
+          `n_success` INTEGER DEFAULT 0,
+          `n_attempts` INTEGER DEFAULT 0
         );""",
         """\
         CREATE TABLE `trials` (
@@ -70,11 +75,14 @@ def insert_tactics(db, game):
 
 def pick_tactics(db):
     """
-    - also add no more recent than 20h
-    - also exclude more than 10 correct
     """
     query = QSqlQuery(db)
-    stm = 'SELECT `id` FROM `tactics` ORDER BY `difficulty` LIMIT 1;'
+    stm = f"""\
+    SELECT `id` FROM `tactics`
+    WHERE (`days_ago` IS NULL OR `days_ago` > {DAYS_AGO})
+    AND `n_success` <= {N_SUCCESS}
+    ORDER BY `difficulty` LIMIT 1;
+    """
     if not query.exec(stm):
         raise SyntaxError(query.lastError().text())
 
@@ -92,10 +100,15 @@ def insert_trial(db, outcome):
         raise SyntaxError(query.lastError().text())
 
 
-def update_difficulty_per_tactic(db, tactic_id, difficulty):
+def update_difficulty_per_tactic(db, tactic_id, values):
 
     query = QSqlQuery(db)
-    stm = f'UPDATE `tactics` SET `difficulty` = {difficulty} WHERE `id` == {tactic_id};'
+    stm = f"""UPDATE `tactics` SET
+    `difficulty` = {values[0]},
+    `days_ago` = {values[1]},
+    `n_success` = {values[2]},
+    `n_attempts` = {values[3]}
+    WHERE `id` == {tactic_id};"""
     if not query.exec(stm):
         raise SyntaxError(query.lastError().text())
 
@@ -114,22 +127,28 @@ def yield_tactics(db):
 def calculate_difficulty(db, tactic_id):
 
     query = QSqlQuery(db)
-    # select most recent trial
+    # most recent trial as last
     stm = f'SELECT `outcome`, `datetime`, `duration` FROM `trials` WHERE `tactic` == {tactic_id} ORDER BY `datetime` ASC;'
     if not query.exec(stm):
         raise SyntaxError(query.lastError().text())
 
     difficulty = []
+    n_attempts = 0
+    n_success = 0
+    days_passed = 'NULL'
     while query.next():
+        n_attempts += 1
+        timestamp = datetime.strptime(query.value('datetime'), '%Y-%m-%d %H:%M:%S')
+        days_passed = (datetime.now() - timestamp).total_seconds() / 3600 / 24
+
         if query.value('outcome') == 0:
             difficulty_per_trial = -1  # penalty per error
         else:
-            timestamp = datetime.strptime(query.value('datetime'), '%Y-%m-%d %H:%M:%S')
-            days_passed = (datetime.now() - timestamp).total_seconds() / 3600 / 24
+            n_success += 1
             difficulty_per_trial = (MAX_DUR_PER_MOVE - query.value('duration')) - RATE * days_passed
             # do not get penalty for correct answer, but in the worst case it goes to zero
             difficulty_per_trial = max([difficulty_per_trial, 0])
 
         difficulty.append(difficulty_per_trial)
 
-    return sum(difficulty)
+    return sum(difficulty), days_passed, n_success, n_attempts

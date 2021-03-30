@@ -7,8 +7,8 @@ from .database import yield_tactics, calculate_difficulty, update_difficulty_per
 
 def update_difficulty(db):
     for tactic_id in yield_tactics(db):
-        difficulty = calculate_difficulty(db, tactic_id)
-        update_difficulty_per_tactic(db, tactic_id, difficulty)
+        values = calculate_difficulty(db, tactic_id)
+        update_difficulty_per_tactic(db, tactic_id, values)
 
 
 def read_tactics(tactics_path, tactics_id):
