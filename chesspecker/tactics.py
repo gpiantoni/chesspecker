@@ -13,8 +13,8 @@ def find_player_color(board):
 
 class Tactics():
 
-    def __init__(self, i_tactics, game):
-        self.i = i_tactics
+    def __init__(self, info, game):
+        self.info = info
         self.game = game
         self.board = game.board()
         self._i_move = 0
@@ -77,10 +77,10 @@ def import_tactics(db, pgn_file):
 
 def select_tactics(db):
     update_difficulty(db)
-    tactics_id = pick_tactics(db)
+    tactics = pick_tactics(db)
 
     db_path = Path(db.databaseName())
     tactics_path = db_path.parent / 'tactics'
-    game = read_tactics(tactics_path, tactics_id)
+    game = read_tactics(tactics_path, tactics['id'])
 
-    return tactics_id, game
+    return tactics, game

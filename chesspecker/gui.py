@@ -1,4 +1,13 @@
-from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QWidget, QLineEdit, QFormLayout, QPushButton
+from PyQt5.QtWidgets import (
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+    )
 from PyQt5.QtSvg import QSvgWidget
 from PyQt5.QtCore import QSize, Qt
 from time import time
@@ -6,7 +15,7 @@ from time import time
 from chess import svg
 
 from .tactics import Tactics, select_tactics
-from .database import open_database, insert_trial
+from .database import open_database, insert_trial, n_tactics
 
 
 size = 800
@@ -31,6 +40,20 @@ class ChessWoordpecker(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        h_general = QHBoxLayout()
+        self.l_tactics = QLabel('')
+        self.l_tactics.setAlignment(Qt.AlignRight)
+        h_general.addWidget(self.l_tactics)
+        self.l_success = QLabel('0')
+        self.l_success.setAlignment(Qt.AlignRight)
+        h_general.addWidget(self.l_success)
+        self.l_session = QLabel('0')
+        self.l_session.setAlignment(Qt.AlignRight)
+        h_general.addWidget(self.l_session)
+        self.l_total = QLabel('0')
+        self.l_total.setAlignment(Qt.AlignRight)
+        h_general.addWidget(self.l_total)
+
         self.w_svg = SvgBoard()  # set size
 
         l_form = QFormLayout()
@@ -42,14 +65,14 @@ class ChessWoordpecker(QMainWindow):
         self.w_next = QPushButton('Next')
         self.w_next.setAutoDefault(True)
         self.w_next.clicked.connect(self.tactics_next)
-        self.w_replay = QPushButton('Replay (todo)')
-        self.w_replay.setEnabled(False)
-        l_form.addRow(self.w_next, self.w_replay)
+        self.l_stream = QLabel('')
+        l_form.addRow(self.w_next, self.l_stream)
 
         central_widget = QWidget()
         layout = QVBoxLayout()
         layout.addWidget(self.w_svg)
         layout.addLayout(l_form)
+        layout.addLayout(h_general)
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
@@ -58,13 +81,14 @@ class ChessWoordpecker(QMainWindow):
 
     def open_sqlite(self, sqlite_file):
         self.db = open_database(sqlite_file)
+        self.l_total.setText(str(n_tactics(self.db)))
 
     def tactics_next(self):
         self.w_line.setText('')
 
-        i_tactics, game = select_tactics(self.db)
+        tactics, game = select_tactics(self.db)
 
-        self.tactics = Tactics(i_tactics, game)
+        self.tactics = Tactics(tactics, game)
         self.t = time()
 
         if self.tactics.board.turn != self.tactics.player_color:
@@ -106,13 +130,24 @@ class ChessWoordpecker(QMainWindow):
 
     def finished(self, outcome):
         self.w_line.setEnabled(False)
+        val = int(self.l_session.text()) + 1
+        self.l_session.setText(str(val))
+
         if outcome == 0:
+            self.l_stream.setText(self.l_stream.text() + '-')
             duration = 0
         else:
-            # how to calculate number of moves
+            self.l_stream.setText(self.l_stream.text() + '+')
+            val = int(self.l_success.text()) + 1
+            self.l_success.setText(str(val))
             duration = (time() - self.t) / self.tactics.n_player_moves
+
+        success = self.tactics.info['n_success'] + outcome
+        attempts = self.tactics.info['n_attempts'] + 1
+        self.l_tactics.setText(f'{success: 4d} /{attempts: 4d}')
+
         outcome = {
-            'id': self.tactics.i,
+            'id': self.tactics.info['id'],
             'duration': duration,
             'outcome': outcome,
             }

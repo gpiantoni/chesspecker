@@ -10,7 +10,7 @@ from PyQt5.QtSql import (
 RATE = 1
 MAX_DUR_PER_MOVE = 20
 DAYS_AGO = 0.9
-N_SUCCESS = 10
+N_SUCCESS = 5
 
 
 def open_database(path_to_sqlite):
@@ -73,12 +73,26 @@ def insert_tactics(db, game):
         f.write(str(game))
 
 
+def n_tactics(db):
+    """
+    """
+    query = QSqlQuery(db)
+    stm = """SELECT COUNT(`id`) FROM `tactics`"""
+    if not query.exec(stm):
+        raise SyntaxError(query.lastError().text())
+
+    while query.next():
+        n_tactics = query.value(0)
+
+    return n_tactics
+
+
 def pick_tactics(db):
     """
     """
     query = QSqlQuery(db)
     stm = f"""\
-    SELECT `id` FROM `tactics`
+    SELECT `id`, `n_success`, `n_attempts` FROM `tactics`
     WHERE (`days_ago` IS NULL OR `days_ago` > {DAYS_AGO})
     AND `n_success` <= {N_SUCCESS}
     ORDER BY `difficulty` LIMIT 1;
@@ -87,9 +101,12 @@ def pick_tactics(db):
         raise SyntaxError(query.lastError().text())
 
     while query.next():
-        tactics_id = query.value('id')
-
-    return tactics_id
+        out = {
+            'id': query.value('id'),
+            'n_success': query.value('n_success'),
+            'n_attempts': query.value('n_attempts'),
+            }
+    return out
 
 
 def insert_trial(db, outcome):
