@@ -122,6 +122,9 @@ class ChessWoordpecker(QMainWindow):
         else:
             self.finished(1)
 
+        if self.tactics.next_move is None:
+            self.finished(1)
+
     def show_move(self):
         svg_board = svg.board(self.tactics.board, orientation=self.tactics.player_color, lastmove=self.tactics.previous_move)
         svg_bytes = bytearray(svg_board, encoding='utf-8')
