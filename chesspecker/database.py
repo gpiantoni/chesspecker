@@ -77,14 +77,20 @@ def n_tactics(db):
     """
     """
     query = QSqlQuery(db)
-    stm = """SELECT COUNT(`id`) FROM `tactics`"""
+    stm = f"""SELECT COUNT(`id`) FROM `tactics` WHERE `n_success` < {N_SUCCESS}"""
     if not query.exec(stm):
         raise SyntaxError(query.lastError().text())
-
     while query.next():
         n_tactics = query.value(0)
 
-    return n_tactics
+    query = QSqlQuery(db)
+    stm = """SELECT COUNT(`id`) FROM `tactics`"""
+    if not query.exec(stm):
+        raise SyntaxError(query.lastError().text())
+    while query.next():
+        n_total_tactics = query.value(0)
+
+    return n_tactics, n_total_tactics
 
 
 def pick_tactics(db):
@@ -94,7 +100,7 @@ def pick_tactics(db):
     stm = f"""\
     SELECT `id`, `n_success`, `n_attempts` FROM `tactics`
     WHERE (`days_ago` IS NULL OR `days_ago` > {DAYS_AGO})
-    AND `n_success` <= {N_SUCCESS}
+    AND `n_success` < {N_SUCCESS}
     ORDER BY `difficulty` LIMIT 1;
     """
     if not query.exec(stm):

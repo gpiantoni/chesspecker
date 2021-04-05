@@ -84,7 +84,9 @@ class ChessWoordpecker(QMainWindow):
 
     def open_sqlite(self, sqlite_file):
         self.db = open_database(sqlite_file)
-        self.l_total.setText(str(n_tactics(self.db)))
+
+        n_current, n_total = n_tactics(self.db)
+        self.l_total.setText(f'{n_current: 3d}/ {n_total: 3d}')
 
     def tactics_next(self):
         self.w_line.setText('')
