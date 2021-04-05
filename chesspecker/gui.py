@@ -41,6 +41,9 @@ class ChessWoordpecker(QMainWindow):
         super().__init__()
 
         h_general = QHBoxLayout()
+        self.l_id = QLabel('')
+        self.l_id.setAlignment(Qt.AlignRight)
+        h_general.addWidget(self.l_id)
         self.l_tactics = QLabel('')
         self.l_tactics.setAlignment(Qt.AlignRight)
         h_general.addWidget(self.l_tactics)
@@ -97,6 +100,8 @@ class ChessWoordpecker(QMainWindow):
         self.w_line.setEnabled(True)
         self.w_line.setFocus()
         self.show_move()
+        self.l_id.setText(f'')
+        self.l_tactics.setText('')
 
     def moved(self):
         user = self.w_line.text()
@@ -145,6 +150,7 @@ class ChessWoordpecker(QMainWindow):
             self.l_success.setText(str(val))
             duration = (time() - self.t) / self.tactics.n_player_moves
 
+        self.l_id.setText(f'Tactics #{self.tactics.info["id"]}')
         success = self.tactics.info['n_success'] + outcome
         attempts = self.tactics.info['n_attempts'] + 1
         self.l_tactics.setText(f'{success: 4d} /{attempts: 4d}')
