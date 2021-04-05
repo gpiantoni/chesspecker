@@ -100,7 +100,7 @@ class ChessWoordpecker(QMainWindow):
         self.w_line.setEnabled(True)
         self.w_line.setFocus()
         self.show_move()
-        self.l_id.setText(f'')
+        self.l_id.setText('')
         self.l_tactics.setText('')
 
     def moved(self):
@@ -124,10 +124,10 @@ class ChessWoordpecker(QMainWindow):
         if self.tactics.move():
             self.w_line.setText('')
             self.show_move()
-        else:
-            self.finished(1)
+            if self.tactics.next_move is None:
+                self.finished(1)
 
-        if self.tactics.next_move is None:
+        else:
             self.finished(1)
 
     def show_move(self):
