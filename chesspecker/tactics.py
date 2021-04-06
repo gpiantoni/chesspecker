@@ -1,5 +1,7 @@
 from pathlib import Path
 from math import ceil
+from collections import defaultdict
+from itertools import count
 
 from chess.pgn import read_game
 
@@ -66,13 +68,26 @@ def read_tactics(tactics_path, tactics_id):
     return game
 
 
-def import_tactics(db, pgn_file):
-    with pgn_file.open() as f:
-        while True:
+def import_tactics(db, pgn_file, max_new_tactics=None):
+    if max_new_tactics is None:
+        max_new_tactics = count()
+    else:
+        max_new_tactics = range(max_new_tactics)
+
+    current_tactics = read_current_fens(db)
+
+    with open(pgn_file) as f:
+        for i in max_new_tactics:
+
             game = read_game(f)
             if game is None:
                 break
-            insert_tactics(db, game)
+
+            if game.board().fen() in current_tactics:
+                print(f'Tactics {game.board().fen()} already exists')
+
+            else:
+                insert_tactics(db, game)
 
 
 def select_tactics(db):
@@ -84,3 +99,19 @@ def select_tactics(db):
     game = read_tactics(tactics_path, tactics['id'])
 
     return tactics, game
+
+
+def read_current_fens(db):
+    db_path = Path(db.databaseName())
+    tactics_path = db_path.parent / 'tactics'
+    all_fens = [read_tactics(tactics_path, i).board().fen() for i in yield_tactics(db)]
+
+    D = defaultdict(list)
+    for i, item in enumerate(all_fens):
+        D[item].append(i)
+    D = {k: v for k, v in D.items() if len(v) > 1}
+    if D:
+        print('duplicated tactics')
+        print(D)
+
+    return all_fens
