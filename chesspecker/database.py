@@ -7,6 +7,7 @@ from PyQt5.QtSql import (
     QSqlQuery,
     )
 
+PENALTY_PER_ERROR = -5
 RATE = 1
 MAX_DUR_PER_MOVE = 20
 DAYS_AGO = 0.9
@@ -165,7 +166,7 @@ def calculate_difficulty(db, tactic_id):
         days_passed = (datetime.now() - timestamp).total_seconds() / 3600 / 24
 
         if query.value('outcome') == 0:
-            difficulty_per_trial = -1  # penalty per error
+            difficulty_per_trial = PENALTY_PER_ERROR
         else:
             n_success += 1
             difficulty_per_trial = (MAX_DUR_PER_MOVE - query.value('duration')) - RATE * days_passed
