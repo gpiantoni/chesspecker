@@ -14,11 +14,12 @@ from time import time
 
 from chess import svg
 
-from .tactics import Tactics, select_tactics
+from .tactics import Tactics, select_tactics, topup_tactics
 from .database import open_database, insert_trial, n_tactics
 
 
 size = 800
+N_TACTICS = 50
 
 
 class SvgBoard(QSvgWidget):
@@ -84,6 +85,7 @@ class ChessWoordpecker(QMainWindow):
 
     def open_sqlite(self, sqlite_file):
         self.db = open_database(sqlite_file)
+        topup_tactics(self.db, N_TACTICS)
 
         n_current, n_total = n_tactics(self.db)
         self.l_total.setText(f'{n_current: 3d}/ {n_total: 3d}')
