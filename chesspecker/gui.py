@@ -120,6 +120,9 @@ class ChessWoordpecker(QMainWindow):
             self.finished(0)
             return
 
+        # when there is one more move, this line gets cancelled very quickly
+        self.w_line.setText(self.tactics.board.san(user_move))
+
         # player's move
         self.tactics.move()
         self.show_move()
