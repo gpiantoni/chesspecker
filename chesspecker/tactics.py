@@ -97,14 +97,13 @@ def import_tactics(db, pgn_file, max_new_tactics=None):
 
 
 def select_tactics(db):
-    update_difficulty(db)
-    tactics = pick_tactics(db)
+    for tactics in pick_tactics(db):
 
-    db_path = Path(db.databaseName())
-    tactics_path = db_path.parent / 'tactics'
-    game = read_tactics(tactics_path, tactics['id'])
+        db_path = Path(db.databaseName())
+        tactics_path = db_path.parent / 'tactics'
+        game = read_tactics(tactics_path, tactics['id'])
 
-    return tactics, game
+        yield tactics, game
 
 
 def read_current_fens(db):

@@ -11,15 +11,16 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtSvg import QSvgWidget
 from PyQt5.QtCore import QSize, Qt
 from time import time
+from functools import partial
 
 from chess import svg
 
-from .tactics import Tactics, select_tactics, topup_tactics
+from .tactics import Tactics, select_tactics, topup_tactics, update_difficulty
 from .database import open_database, insert_trial, n_tactics
 
 
 size = 800
-N_TACTICS = 50
+N_TACTICS = 40
 
 
 class SvgBoard(QSvgWidget):
@@ -69,6 +70,9 @@ class ChessWoordpecker(QMainWindow):
         self.w_next = QPushButton('Next')
         self.w_next.setAutoDefault(True)
         self.w_next.clicked.connect(self.tactics_next)
+        self.w_retry = QPushButton('Retry')
+        self.w_retry.clicked.connect(
+                partial(self.tactics_next, retry=True))
         self.l_stream = QLabel('')
         l_form.addRow(self.w_next, self.l_stream)
 
@@ -90,10 +94,14 @@ class ChessWoordpecker(QMainWindow):
         n_current, n_total = n_tactics(self.db)
         self.l_total.setText(f'{n_current: 3d}/ {n_total: 3d}')
 
-    def tactics_next(self):
+        update_difficulty(self.db)
+
+    def tactics_next(self, retry=False):
         self.w_line.setText('')
 
-        tactics, game = select_tactics(self.db)
+        if not retry:
+            tactics, game = select_tactics(self.db)
+        tactics, game = self.current
 
         self.tactics = Tactics(tactics, game)
         self.t = time()
@@ -116,7 +124,8 @@ class ChessWoordpecker(QMainWindow):
             return
 
         if self.tactics.next_move != user_move:
-            self.w_line.setText(f'Incorrect ({user})')
+            correct = self.tactics.board.san(self.tactics.next_move)
+            self.w_line.setText(f'Incorrect ({user}) -> {correct}')
             self.finished(0)
             return
 

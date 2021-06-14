@@ -113,7 +113,7 @@ def pick_tactics(db):
             'n_success': query.value('n_success'),
             'n_attempts': query.value('n_attempts'),
             }
-    return out
+        yield out
 
 
 def insert_trial(db, outcome):
