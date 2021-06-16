@@ -67,19 +67,23 @@ class ChessWoordpecker(QMainWindow):
         self.w_line.setEnabled(False)
         l_form.addRow('Your move: ', self.w_line)
 
+        l_buttons = QHBoxLayout()
         self.w_next = QPushButton('Next')
         self.w_next.setAutoDefault(True)
         self.w_next.clicked.connect(self.tactics_next)
+        l_buttons.addWidget(self.w_next)
         self.w_retry = QPushButton('Retry')
         self.w_retry.clicked.connect(
-                partial(self.tactics_next, retry=True))
+            partial(self.tactics_next, retry=True))
+        l_buttons.addWidget(self.w_retry)
         self.l_stream = QLabel('')
-        l_form.addRow(self.w_next, self.l_stream)
+        l_buttons.addWidget(self.l_stream)
 
         central_widget = QWidget()
         layout = QVBoxLayout()
         layout.addWidget(self.w_svg)
         layout.addLayout(l_form)
+        layout.addLayout(l_buttons)
         layout.addLayout(h_general)
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
@@ -96,11 +100,13 @@ class ChessWoordpecker(QMainWindow):
 
         update_difficulty(self.db)
 
+        self.tactics_generator = select_tactics(self.db)
+
     def tactics_next(self, retry=False):
         self.w_line.setText('')
 
         if not retry:
-            tactics, game = select_tactics(self.db)
+            self.current = next(self.tactics_generator)
         tactics, game = self.current
 
         self.tactics = Tactics(tactics, game)

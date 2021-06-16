@@ -102,18 +102,20 @@ def pick_tactics(db):
     SELECT `id`, `n_success`, `n_attempts` FROM `tactics`
     WHERE (`days_ago` IS NULL OR `days_ago` > {DAYS_AGO})
     AND `n_success` < {N_SUCCESS}
-    ORDER BY `difficulty` LIMIT 1;
+    ORDER BY `difficulty`;
     """
     if not query.exec(stm):
         raise SyntaxError(query.lastError().text())
 
+    out = []
     while query.next():
-        out = {
+        out.append({
             'id': query.value('id'),
             'n_success': query.value('n_success'),
             'n_attempts': query.value('n_attempts'),
-            }
-        yield out
+            })
+
+    return out
 
 
 def insert_trial(db, outcome):
