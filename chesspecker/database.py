@@ -7,9 +7,6 @@ from PyQt5.QtSql import (
     QSqlQuery,
     )
 
-PENALTY_PER_ERROR = -5
-RATE = 1
-MAX_DUR_PER_MOVE = 20
 DAYS_AGO = 0.9
 N_SUCCESS = 5
 
@@ -102,7 +99,7 @@ def pick_tactics(db):
     SELECT `id`, `n_success`, `n_attempts` FROM `tactics`
     WHERE (`days_ago` IS NULL OR `days_ago` > {DAYS_AGO})
     AND `n_success` < {N_SUCCESS}
-    ORDER BY `difficulty`;
+    ORDER BY `difficulty` ASC, `n_success` ASC, `n_attempts` DESC;
     """
     if not query.exec(stm):
         raise SyntaxError(query.lastError().text())
@@ -153,28 +150,23 @@ def yield_tactics(db):
 def calculate_difficulty(db, tactic_id):
 
     query = QSqlQuery(db)
-    # most recent trial as last
-    stm = f'SELECT `outcome`, `datetime`, `duration` FROM `trials` WHERE `tactic` == {tactic_id} ORDER BY `datetime` ASC;'
+    stm = f"SELECT sum(`outcome`), count(`outcome`), max(`datetime`) FROM `trials` WHERE `tactic` == {tactic_id};"
+
     if not query.exec(stm):
         raise SyntaxError(query.lastError().text())
 
-    difficulty = []
-    n_attempts = 0
-    n_success = 0
-    days_passed = 'NULL'
     while query.next():
-        n_attempts += 1
-        timestamp = datetime.strptime(query.value('datetime'), '%Y-%m-%d %H:%M:%S')
-        days_passed = (datetime.now() - timestamp).total_seconds() / 3600 / 24
+        n_success = query.value(0)
+        n_attempts = query.value(1)
+        timestamp = query.value(2)
+        if timestamp == '':
+            n_success = 0
+            difficulty = 0
+            days_passed = 'NULL'
 
-        if query.value('outcome') == 0:
-            difficulty_per_trial = PENALTY_PER_ERROR
         else:
-            n_success += 1
-            difficulty_per_trial = (MAX_DUR_PER_MOVE - query.value('duration')) - RATE * days_passed
-            # do not get penalty for correct answer, but in the worst case it goes to zero
-            difficulty_per_trial = max([difficulty_per_trial, 0])
+            difficulty = n_success / n_attempts
+            timestamp = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+            days_passed = (datetime.now() - timestamp).total_seconds() / 3600 / 24
 
-        difficulty.append(difficulty_per_trial)
-
-    return sum(difficulty), days_passed, n_success, n_attempts
+    return difficulty, days_passed, n_success, n_attempts
