@@ -38,26 +38,23 @@ class SvgBoard(QSvgWidget):
 class ChessWoordpecker(QMainWindow):
     """when closing, close database"""
     tactics = None
+    stream = ''
 
     def __init__(self):
         super().__init__()
 
-        h_general = QHBoxLayout()
-        self.l_id = QLabel('')
-        self.l_id.setAlignment(Qt.AlignRight)
-        h_general.addWidget(self.l_id)
-        self.l_tactics = QLabel('')
-        self.l_tactics.setAlignment(Qt.AlignRight)
-        h_general.addWidget(self.l_tactics)
+        l_general = QHBoxLayout()
+        self.l_stream = QLabel('')
+        l_general.addWidget(self.l_stream)
         self.l_success = QLabel('0')
         self.l_success.setAlignment(Qt.AlignRight)
-        h_general.addWidget(self.l_success)
+        l_general.addWidget(self.l_success)
         self.l_session = QLabel('0')
         self.l_session.setAlignment(Qt.AlignRight)
-        h_general.addWidget(self.l_session)
+        l_general.addWidget(self.l_session)
         self.l_total = QLabel('0')
         self.l_total.setAlignment(Qt.AlignRight)
-        h_general.addWidget(self.l_total)
+        l_general.addWidget(self.l_total)
 
         self.w_svg = SvgBoard()  # set size
 
@@ -76,15 +73,19 @@ class ChessWoordpecker(QMainWindow):
         self.w_retry.clicked.connect(
             partial(self.tactics_next, retry=True))
         l_buttons.addWidget(self.w_retry)
-        self.l_stream = QLabel('')
-        l_buttons.addWidget(self.l_stream)
+        self.l_id = QLabel('')
+        self.l_id.setAlignment(Qt.AlignRight)
+        l_buttons.addWidget(self.l_id)
+        self.l_tactics = QLabel('')
+        self.l_tactics.setAlignment(Qt.AlignRight)
+        l_buttons.addWidget(self.l_tactics)
 
         central_widget = QWidget()
         layout = QVBoxLayout()
         layout.addWidget(self.w_svg)
         layout.addLayout(l_form)
         layout.addLayout(l_buttons)
-        layout.addLayout(h_general)
+        layout.addLayout(l_general)
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 

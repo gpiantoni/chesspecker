@@ -8,6 +8,7 @@ from chess.pgn import read_game
 from .database import yield_tactics, calculate_difficulty, update_difficulty_per_tactic, insert_tactics, pick_tactics, n_tactics
 
 PGN_FILE = '/home/gio/surfdrive/chess/errors.pgn'
+STANDARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
 
 def find_player_color(board):
@@ -110,6 +111,9 @@ def read_current_fens(db):
     db_path = Path(db.databaseName())
     tactics_path = db_path.parent / 'tactics'
     all_fens = [read_tactics(tactics_path, i).board().fen() for i in yield_tactics(db)]
+
+    # reject starting FEN (used only for games, not tactics)
+    all_fens = [fen for fen in all_fens if fen != STANDARD_FEN]
 
     D = defaultdict(list)
     for i, item in enumerate(all_fens):
