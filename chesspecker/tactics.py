@@ -11,9 +11,14 @@ PGN_FILE = '/home/gio/surfdrive/chess/errors.pgn'
 STANDARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
 
-def find_player_color(board):
-    """With chesstempo, this is correct, but maybe not in all the cases"""
-    return not board.turn
+def find_player_color(game):
+
+    if game.headers['White'].lower() == 'player':
+        return True
+    elif game.headers['Black'].lower() == 'player':
+        return False
+    else:
+        raise ValueError('White or Black should be called "player"')
 
 
 class Tactics():
@@ -24,7 +29,7 @@ class Tactics():
         self.board = game.board()
         self._i_move = 0
         self._moves = list(game.mainline_moves())
-        self.player_color = find_player_color(self.board)
+        self.player_color = find_player_color(self.game)
         # total number of moves that the player makes
         self.n_player_moves = ceil((len(self._moves) - 1) / 2)
 
