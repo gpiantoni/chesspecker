@@ -38,6 +38,7 @@ class SvgBoard(QSvgWidget):
 class ChessWoordpecker(QMainWindow):
     """when closing, close database"""
     tactics = None
+    is_retry = False
     stream = ''
 
     def __init__(self):
@@ -105,9 +106,13 @@ class ChessWoordpecker(QMainWindow):
 
     def tactics_next(self, retry=False):
         self.w_line.setText('')
+        self.is_retry = retry
 
         if not retry:
             self.current = next(self.tactics_generator)
+            self.l_id.setText('')
+            self.l_tactics.setText('')
+
         tactics, game = self.current
 
         self.tactics = Tactics(tactics, game)
@@ -119,8 +124,6 @@ class ChessWoordpecker(QMainWindow):
         self.w_line.setEnabled(True)
         self.w_line.setFocus()
         self.show_move()
-        self.l_id.setText('')
-        self.l_tactics.setText('')
 
     def moved(self):
         user = self.w_line.text()
@@ -161,6 +164,11 @@ class ChessWoordpecker(QMainWindow):
 
     def finished(self, outcome):
         self.w_line.setEnabled(False)
+
+        # do not update stats if retry
+        if self.is_retry:
+            return
+
         val = int(self.l_session.text()) + 1
         self.l_session.setText(str(val))
 
