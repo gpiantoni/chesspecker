@@ -6,8 +6,8 @@ from itertools import count
 from chess.pgn import read_game
 
 from .database import yield_tactics, calculate_difficulty, update_difficulty_per_tactic, insert_tactics, pick_tactics, n_tactics
+from .constants import PGN_FILE
 
-PGN_FILE = '/home/gio/surfdrive/chess/errors.pgn'
 STANDARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
 
@@ -77,11 +77,19 @@ def read_tactics(tactics_path, tactics_id):
 
 
 def import_tactics(db, pgn_file, max_new_tactics=None):
+    """
+
+    Returns
+    -------
+    int
+        number of tactics imported
+    """
     current_tactics = read_current_fens(db)
 
     out = []
     with open(pgn_file) as f:
 
+        i = -1
         for i in count():
             game = read_game(f)
             if game is None:
@@ -100,6 +108,8 @@ def import_tactics(db, pgn_file, max_new_tactics=None):
 
     with open(pgn_file, 'w') as f:
         f.write('\n\n'.join(out))
+
+    return i
 
 
 def select_tactics(db):
@@ -135,5 +145,5 @@ def topup_tactics(db, ideal_n_tactics):
     current_tactics = n_tactics(db)[0]
     if current_tactics < ideal_n_tactics:
         difference = ideal_n_tactics - current_tactics
-        import_tactics(db, PGN_FILE, difference)
-        print(f'Importing {difference} tactics')
+        imported = import_tactics(db, PGN_FILE, difference)
+        print(f'Importing {imported} tactics')

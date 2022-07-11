@@ -17,10 +17,7 @@ from chess import svg
 
 from .tactics import Tactics, select_tactics, topup_tactics, update_difficulty
 from .database import open_database, insert_trial, n_tactics
-
-
-size = 800
-N_TACTICS = 40
+from .constants import size, MAX_N_TACTICS
 
 
 class SvgBoard(QSvgWidget):
@@ -90,12 +87,9 @@ class ChessWoordpecker(QMainWindow):
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
-    def create_sqlite(self, sqlite_file):
-        pass
-
     def open_sqlite(self, sqlite_file):
         self.db = open_database(sqlite_file)
-        topup_tactics(self.db, N_TACTICS)
+        topup_tactics(self.db, MAX_N_TACTICS)
 
         n_current, n_total = n_tactics(self.db)
         self.l_total.setText(f'{n_current: 3d}/ {n_total: 3d}')
@@ -109,7 +103,12 @@ class ChessWoordpecker(QMainWindow):
         self.is_retry = retry
 
         if not retry:
-            self.current = next(self.tactics_generator)
+            try:
+                self.current = next(self.tactics_generator)
+            except StopIteration:
+                self.close()
+                return
+
             self.l_id.setText('')
             self.l_tactics.setText('')
 

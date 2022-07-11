@@ -1,19 +1,23 @@
 from PyQt5.QtWidgets import QApplication
 from shutil import copyfile
-from pathlib import Path
 
-
+from .database import create_database
 from .gui import ChessWoordpecker
+from .constants import BASE_DIR
 
-sqlite_file = "/home/gio/surfdrive/chess/woodpecker.sqlite"
+
+sqlite_file = BASE_DIR / 'woodpecker.sqlite'
+backup_file = BASE_DIR / 'woodpecker_backup.sqlite'
 
 app = QApplication([])
 
 
 def main():
 
-    backup_file = Path(sqlite_file).parent / 'woodpecker_backup.sqlite'
-    copyfile(sqlite_file, backup_file)
+    if sqlite_file.exists():
+        copyfile(sqlite_file, backup_file)
+    else:
+        create_database(sqlite_file)
 
     w = ChessWoordpecker()
     w.open_sqlite(sqlite_file)

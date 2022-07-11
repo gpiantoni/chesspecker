@@ -6,22 +6,21 @@ from PyQt5.QtSql import (
     QSqlDatabase,
     QSqlQuery,
     )
-
-DAYS_AGO = 0.9
-N_SUCCESS = 5
+from .constants import N_SUCCESS, DAYS_AGO
 
 
 def open_database(path_to_sqlite):
     db = QSqlDatabase.addDatabase('QSQLITE', 'tactics')
     assert db.isValid()
-    db.setDatabaseName(path_to_sqlite)
+    db.setDatabaseName(str(path_to_sqlite))
     assert db.open()
 
     return db
 
 
 def create_database(path_to_sqlite):
-    Path(path_to_sqlite).unlink()
+    if path_to_sqlite.exists():
+        Path(path_to_sqlite).unlink()
     db = open_database(path_to_sqlite)
 
     statements = [
